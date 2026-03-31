@@ -1,19 +1,11 @@
 import React from "react";
 import { languages } from "./assets/languages.js";
+import { getFarewellText, getRandomWord } from "./assets/utils.js";
 import clsx from "clsx";
 
 export default function AssemblyEndgame() {
-  const chips = languages.map((chip) => {
-    const styles = { color: chip.color, backgroundColor: chip.backgroundColor };
-    return (
-      <span style={styles} key={chip.name}>
-        {chip.name}
-      </span>
-    );
-  });
-
   // States Values
-  const [currentWord, setCurrentWord] = React.useState("react");
+  const [currentWord, setCurrentWord] = React.useState(() => getRandomWord());
   const [guessedLetters, setGuessedLetter] = React.useState([]);
 
   // Derived Values
@@ -22,6 +14,30 @@ export default function AssemblyEndgame() {
     if (!currentWord.includes(letter)) {
       wrongGuessCount++;
     }
+  });
+  const lastGuessedLetter = guessedLetters[guessedLetters.length - 1];
+  const isLastGuessIncorrect =
+    lastGuessedLetter && !currentWord.includes(lastGuessedLetter);
+
+  const isGameWon = currentWord
+    .split("")
+    .every((letter) => guessedLetters.includes(letter));
+  const isGameLost = wrongGuessCount >= languages.length - 1;
+  const isGameOver = isGameWon || isGameLost;
+
+  const chips = languages.map((chip, index) => {
+    const styles = {
+      color: chip.color,
+      backgroundColor: chip.backgroundColor,
+    };
+
+    const lostClassName = wrongGuessCount > index ? "lost" : "";
+
+    return (
+      <span style={styles} key={chip.name} className={lostClassName}>
+        {chip.name}
+      </span>
+    );
   });
 
   function guessLetters(letter) {
@@ -41,6 +57,9 @@ export default function AssemblyEndgame() {
 
     return (
       <button
+        disabled={isGameOver}
+        aria-disabled={isGameOver}
+        aria-label={`Letter ${letter}`}
         key={letter}
         onClick={() => guessLetters(letter)}
         className={style}
@@ -58,6 +77,41 @@ export default function AssemblyEndgame() {
       </span>
     ));
 
+  const gameStatusClass = clsx("game-status", {
+    won: isGameWon,
+    lost: isGameLost,
+    farewell: !isGameOver && isLastGuessIncorrect,
+  });
+
+  function renderGameStatus() {
+    if (!isGameOver && isLastGuessIncorrect) {
+      return <p>{getFarewellText(languages[wrongGuessCount - 1].name)}</p>;
+    }
+
+    if (isGameWon) {
+      return (
+        <>
+          <h2>You win!</h2>
+          <p>Well done! 🎉</p>
+        </>
+      );
+    }
+    if (isGameLost) {
+      return (
+        <>
+          <h2>Game over!</h2>
+          <p>You lose! Better start learning Assembly 😭</p>
+        </>
+      );
+    }
+    return null;
+  }
+
+  function startNewGame() {
+    setCurrentWord(getRandomWord());
+    setGuessedLetter([]);
+  }
+
   return (
     <main>
       <header>
@@ -67,14 +121,32 @@ export default function AssemblyEndgame() {
           from Assembly!
         </p>
       </header>
-      <section className="game-status">
-        <h2>You win!</h2>
-        <p>Well done! 🎉</p>
+      <section aria-live="polite" role="status" className={gameStatusClass}>
+        {renderGameStatus()}
       </section>
       <section className="chip-container">{chips}</section>
-      <section className="current-word">{letterElements}</section>
+      <section className="current-word">
+        {!isGameLost
+          ? letterElements
+          : currentWord.split("").map((letter, index) => {
+              const letterClassName = clsx(
+                isGameLost &&
+                  !guessedLetters.includes(letter) &&
+                  "missed-letter",
+              );
+              return (
+                <span key={index} className={letterClassName}>
+                  {letter.toLocaleUpperCase()}
+                </span>
+              );
+            })}
+      </section>
       <section className="keyboard">{keyboardEl}</section>
-      <button className="new-game">New Game</button>
+      {isGameOver && (
+        <button onClick={startNewGame} className="new-game">
+          New Game
+        </button>
+      )}
     </main>
   );
 }
