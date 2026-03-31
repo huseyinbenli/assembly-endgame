@@ -2,6 +2,7 @@ import React from "react";
 import { languages } from "./assets/languages.js";
 import { getFarewellText, getRandomWord } from "./assets/utils.js";
 import clsx from "clsx";
+import Confetti from "react-confetti";
 
 export default function AssemblyEndgame() {
   // States Values
@@ -113,40 +114,43 @@ export default function AssemblyEndgame() {
   }
 
   return (
-    <main>
-      <header>
-        <h1>Assembly: Endgame</h1>
-        <p>
-          Guess the word within 8 attempts to keep the programming world safe
-          from Assembly!
-        </p>
-      </header>
-      <section aria-live="polite" role="status" className={gameStatusClass}>
-        {renderGameStatus()}
-      </section>
-      <section className="chip-container">{chips}</section>
-      <section className="current-word">
-        {!isGameLost
-          ? letterElements
-          : currentWord.split("").map((letter, index) => {
-              const letterClassName = clsx(
-                isGameLost &&
-                  !guessedLetters.includes(letter) &&
-                  "missed-letter",
-              );
-              return (
-                <span key={index} className={letterClassName}>
-                  {letter.toLocaleUpperCase()}
-                </span>
-              );
-            })}
-      </section>
-      <section className="keyboard">{keyboardEl}</section>
-      {isGameOver && (
-        <button onClick={startNewGame} className="new-game">
-          New Game
-        </button>
-      )}
-    </main>
+    <>
+      {isGameWon && <Confetti />}
+      <main>
+        <header>
+          <h1>Assembly: Endgame</h1>
+          <p>
+            Guess the word within 8 attempts to keep the programming world safe
+            from Assembly!
+          </p>
+        </header>
+        <section aria-live="polite" role="status" className={gameStatusClass}>
+          {renderGameStatus()}
+        </section>
+        <section className="chip-container">{chips}</section>
+        <section className="current-word">
+          {!isGameLost
+            ? letterElements
+            : currentWord.split("").map((letter, index) => {
+                const letterClassName = clsx(
+                  isGameLost &&
+                    !guessedLetters.includes(letter) &&
+                    "missed-letter",
+                );
+                return (
+                  <span key={index} className={letterClassName}>
+                    {letter.toLocaleUpperCase()}
+                  </span>
+                );
+              })}
+        </section>
+        <section className="keyboard">{keyboardEl}</section>
+        {isGameOver && (
+          <button onClick={startNewGame} className="new-game">
+            New Game
+          </button>
+        )}
+      </main>
+    </>
   );
 }
